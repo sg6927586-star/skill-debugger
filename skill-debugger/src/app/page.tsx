@@ -862,7 +862,19 @@ export default function SkillDebugger() {
 
             {/* Audit Issues List */}
             <div className="flex-1 overflow-y-auto space-y-2.5">
-              {!hasAuditRun ? (
+              {isAuditing ? (
+                <div className="audit-loading-card text-center py-10">
+                  <div className="audit-loading-bar mb-3">
+                    <div className="audit-loading-bar-fill"></div>
+                  </div>
+                  <span className="font-mono text-xs text-[var(--accent-primary)] font-semibold">
+                    Auditing SKILL.md against security and quality rules...
+                  </span>
+                  <span className="font-mono text-[0.7rem] text-[var(--text-muted)] mt-1">
+                    Checking frontmatter, ambiguity, progressive disclosure, and output protocol.
+                  </span>
+                </div>
+              ) : !hasAuditRun ? (
                 <div className="card text-center py-8">
                   <span className="text-[var(--text-secondary)] font-mono text-sm">Ready to audit. Click &apos;Run Audit&apos; to scan your SKILL.md.</span>
                 </div>

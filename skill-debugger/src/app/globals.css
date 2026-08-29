@@ -326,6 +326,54 @@ html, body {
   transition: width 0.3s ease;
 }
 
+/* Loading Skeleton & Pulse Effects */
+.audit-loading-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: pulse-subtle 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.6;
+    border-color: var(--border-default);
+  }
+  50% {
+    opacity: 1;
+    border-color: var(--border-strong);
+  }
+}
+
+.audit-loading-bar {
+  height: 8px;
+  background-color: var(--bg-active);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.audit-loading-bar-fill {
+  height: 100%;
+  width: 40%;
+  background-color: var(--accent-primary);
+  border-radius: 4px;
+  animation: loading-slide 1.5s infinite linear;
+}
+
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
 /* Interactive Buttons */
 .btn {
   display: inline-flex;
