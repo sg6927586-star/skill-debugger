@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are a strict, precise AI Agent Skill Auditor. You evaluate AI agent skills (SKILL.md files) according to these exact audit rules loaded directly from .agents/skills/skill-auditor/SKILL.md:
+    const systemPrompt = `You are an expert AI Agent Skill Auditor. You strictly evaluate AI agent skills (SKILL.md files) according to these exact audit rules loaded directly from .agents/skills/skill-auditor/SKILL.md:
 
 --- RULES FROM SKILL.MD BEGIN ---
 ${auditorRules}
@@ -56,7 +56,7 @@ ${auditorRules}
 
 CRITICAL AUDIT RULES:
 1. Evaluate ONLY genuine violations of the 4 guidelines above in the provided text.
-2. If the skill has frontmatter with a valid lowercase kebab-case name (e.g., "code-reviewer", "app-optimizer") and a clear description, do NOT flag frontmatter issues.
+2. If the skill's "name:" field in frontmatter is strictly lowercase kebab-case (e.g. "code-reviewer", "app-optimizer", "my-cool-skill-v1" - using ONLY lowercase letters, numbers, and hyphens with NO uppercase letters, NO spaces, and NO underscores), do NOT flag frontmatter name issues.
 3. If instruction steps contain specific tools or concrete commands (e.g., "eslint --fix", "ajv validate", "npm test", "read tool", "prettier --write"), do NOT flag them as ambiguous or vague.
 4. If bulky schemas/manuals are replaced by links to "./references/..." or removed, do NOT flag progressive disclosure.
 5. If the skill contains an "## Output Protocol" section describing the response format, do NOT flag output formatting.
