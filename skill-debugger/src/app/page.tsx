@@ -327,12 +327,14 @@ export default function SkillDebugger() {
       }
       if (nameIndices.length > 0) {
         const firstNameIdx = nameIndices[0];
-        linesArr[firstNameIdx] = "name: app-optimizer";
+        const rawName = linesArr[firstNameIdx].replace("name:", "").trim();
+        const cleanName = rawName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        linesArr[firstNameIdx] = `name: ${cleanName || "my-skill"}`;
         for (let j = nameIndices.length - 1; j > 0; j--) {
           linesArr.splice(nameIndices[j], 1);
         }
       } else {
-        linesArr.splice(1, 0, "name: app-optimizer");
+        linesArr.splice(1, 0, "name: my-skill");
       }
 
       for (let i = 0; i < linesArr.length; i++) {
@@ -435,12 +437,14 @@ export default function SkillDebugger() {
     }
     if (nameIndices.length > 0) {
       const firstNameIdx = nameIndices[0];
-      linesArr[firstNameIdx] = "name: app-optimizer";
+      const rawName = linesArr[firstNameIdx].replace("name:", "").trim();
+      const cleanName = rawName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+      linesArr[firstNameIdx] = `name: ${cleanName || "my-skill"}`;
       for (let j = nameIndices.length - 1; j > 0; j--) {
         linesArr.splice(nameIndices[j], 1);
       }
     } else {
-      linesArr.splice(1, 0, "name: app-optimizer");
+      linesArr.splice(1, 0, "name: my-skill");
     }
 
     for (let i = 0; i < linesArr.length; i++) {
