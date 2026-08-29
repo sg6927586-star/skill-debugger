@@ -309,8 +309,117 @@ export default function SkillDebugger() {
     return auditResults.issues.filter(i => i.severity === filterSeverity);
   }, [auditResults.issues, filterSeverity]);
 
-  // Feature 1: Comprehensive Single-Pass Auto-Fix Engine
+  // Feature 1: Targeted Auto-Fix Engine
   const autoFixIssue = (issue: AuditIssue) => {
+    let updated = skillMarkdown;
+    let linesArr = updated.split("\n");
+
+    // Fix ONLY the specific category of the clicked issue card
+    if (issue.category === "frontmatter") {
+      if (linesArr[0]?.trim() !== "---") {
+        linesArr.unshift("---");
+      }
+      const nameIndices: number[] = [];
+      for (let i = 0; i < linesArr.length; i++) {
+        if (linesArr[i].trim().startsWith("name:")) {
+          nameIndices.push(i);
+        }
+      }
+      if (nameIndices.length > 0) {
+        const firstNameIdx = nameIndices[0];
+        linesArr[firstNameIdx] = "name: app-optimizer";
+        for (let j = nameIndices.length - 1; j > 0; j--) {
+          linesArr.splice(nameIndices[j], 1);
+        }
+      } else {
+        linesArr.splice(1, 0, "name: app-optimizer");
+      }
+
+      for (let i = 0; i < linesArr.length; i++) {
+        if (linesArr[i].trim().startsWith("description:")) {
+          const lowerDesc = linesArr[i].toLowerCase();
+          if (
+            lowerDesc.includes("optimize") ||
+            lowerDesc.includes("clean") ||
+            lowerDesc.includes("fix") ||
+            lowerDesc.includes("improve")
+          ) {
+            linesArr[i] = "description: Audits and reviews source code files for quality compliance and structural best practices.";
+          }
+        }
+      }
+      updated = linesArr.join("\n");
+    } else if (issue.category === "ambiguity") {
+      let bodyStartIdx = 0;
+      if (linesArr[0]?.trim() === "---") {
+        for (let i = 1; i < linesArr.length; i++) {
+          if (linesArr[i].trim() === "---") {
+            bodyStartIdx = i + 1;
+            break;
+          }
+        }
+      }
+
+      for (let i = bodyStartIdx; i < linesArr.length; i++) {
+        const lower = linesArr[i].toLowerCase();
+        if (lower.includes("read the project")) {
+          linesArr[i] = "1. Open the project directory and review source files for structural issues using the read tool.";
+        } else if (lower.includes("clean up") || lower.includes("optimize")) {
+          linesArr[i] = "2. Run `eslint --fix .` to remove code quality issues.";
+        } else if (lower.includes("looks good")) {
+          linesArr[i] = "3. Run `ajv validate --schema=output-schema.json --data=result.json` and confirm exit code is 0.";
+        } else if (lower.includes("test the app")) {
+          linesArr[i] = "4. Run `npm test` and confirm exit code is 0.";
+        }
+      }
+      updated = linesArr.join("\n");
+    } else if (issue.category === "progressive-disclosure") {
+      let inCodeBlock = false;
+      let blockStart = -1;
+      let blockLinesCount = 0;
+      let newLinesArr = [...linesArr];
+
+      for (let i = 0; i < linesArr.length; i++) {
+        if (linesArr[i].trim().startsWith("```")) {
+          if (!inCodeBlock) {
+            inCodeBlock = true;
+            blockStart = i;
+            blockLinesCount = 0;
+          } else {
+            inCodeBlock = false;
+            if (blockLinesCount > 15) {
+              newLinesArr.splice(blockStart, i - blockStart + 1, "For full API schema definition, refer to [User API Schema](./references/api-schema.json).");
+              break;
+            }
+          }
+        } else if (inCodeBlock) {
+          blockLinesCount++;
+        }
+      }
+      linesArr = newLinesArr;
+      updated = linesArr.join("\n");
+    } else if (issue.category === "output-format") {
+      if (!updated.toLowerCase().includes("## output protocol")) {
+        updated += `\n\n## Output Protocol\n\nOutput final evaluation as structured JSON:\n\`\`\`json\n{\n  "status": "success",\n  "data": {}\n}\n\`\`\``;
+      }
+    }
+
+    setSkillMarkdown(updated);
+    setApiAuditResult(null);
+
+    setSimLogs(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        type: "success",
+        text: `Auto-fixed ${issue.category} issue on Line ${issue.line}.`,
+        timestamp: new Date().toLocaleTimeString()
+      }
+    ]);
+  };
+
+  // Feature 1b: Fix All Issues Engine
+  const autoFixAllIssues = () => {
     let updated = skillMarkdown;
     let linesArr = updated.split("\n");
 
@@ -403,7 +512,6 @@ export default function SkillDebugger() {
       updated += `\n\n## Output Protocol\n\nOutput final evaluation as structured JSON:\n\`\`\`json\n{\n  "status": "success",\n  "data": {}\n}\n\`\`\``;
     }
 
-    // Update state, clear old API cache, and set clean audit results
     setSkillMarkdown(updated);
     setApiAuditResult(null);
 
@@ -412,7 +520,7 @@ export default function SkillDebugger() {
       {
         id: Date.now(),
         type: "success",
-        text: `Auto-fixed skill issues. All directives now conform to SKILL.md standards.`,
+        text: `Auto-fixed all skill issues in a single pass.`,
         timestamp: new Date().toLocaleTimeString()
       }
     ]);
@@ -718,19 +826,29 @@ export default function SkillDebugger() {
           </div>
 
           <div className="panel-body">
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 text-xs pb-1 border-b border-[var(--border-subtle)]">
-              {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((sev) => (
+            {/* Filter Pills and Fix All Button */}
+            <div className="flex items-center justify-between text-xs pb-1 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center gap-1.5">
+                {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((sev) => (
+                  <button
+                    key={sev}
+                    onClick={() => setFilterSeverity(sev)}
+                    className={`btn text-[0.7rem] px-2 py-0.5 ${
+                      filterSeverity === sev ? "btn-primary" : ""
+                    }`}
+                  >
+                    {sev}
+                  </button>
+                ))}
+              </div>
+              {filteredIssues.length > 0 && (
                 <button
-                  key={sev}
-                  onClick={() => setFilterSeverity(sev)}
-                  className={`btn text-[0.7rem] px-2 py-0.5 ${
-                    filterSeverity === sev ? "btn-primary" : ""
-                  }`}
+                  className="btn btn-primary text-xs py-0.5 px-2 font-mono"
+                  onClick={autoFixAllIssues}
                 >
-                  {sev}
+                  Fix All Issues
                 </button>
-              ))}
+              )}
             </div>
 
             {/* Audit Issues List */}
