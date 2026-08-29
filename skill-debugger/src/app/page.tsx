@@ -300,8 +300,11 @@ export default function SkillDebugger() {
     return { score, issues };
   }, [skillMarkdown]);
 
-  // Active audit results (API result preferred if set, otherwise fallback)
-  const auditResults = apiAuditResult ?? fallbackAuditResult;
+  // Active audit results: Show empty state until user triggers initial audit or fixes issues
+  const [hasAuditRun, setHasAuditRun] = useState<boolean>(false);
+
+  const emptyAuditResult: AuditResult = { score: 100, issues: [] };
+  const auditResults = hasAuditRun ? (apiAuditResult ?? fallbackAuditResult) : emptyAuditResult;
 
   // Filtered Issues
   const filteredIssues = useMemo(() => {
@@ -592,6 +595,7 @@ export default function SkillDebugger() {
   // Call Backend API Route at /api/audit
   const runAuditApi = async (overrideContent?: string | React.MouseEvent) => {
     setIsAuditing(true);
+    setHasAuditRun(true);
     const timeStr = () => new Date().toLocaleTimeString();
     const contentToAudit = typeof overrideContent === "string" ? overrideContent : skillMarkdown;
 
@@ -663,12 +667,13 @@ export default function SkillDebugger() {
   const loadPreset = (presetKey: keyof typeof SAMPLE_SKILLS) => {
     setSkillMarkdown(SAMPLE_SKILLS[presetKey]);
     setApiAuditResult(null);
+    setHasAuditRun(false);
     setSimLogs(prev => [
       ...prev,
       {
         id: Date.now(),
         type: "info",
-        text: `Loaded preset: ${presetKey === "vague" ? "Bad/Vague Skill" : "Good/Optimized Skill"}.`,
+        text: `Loaded preset: ${presetKey === "vague" ? "Bad/Vague Skill" : "Good/Optimized Skill"}. Click 'Run Audit' to inspect.`,
         timestamp: new Date().toLocaleTimeString()
       }
     ]);
@@ -857,7 +862,11 @@ export default function SkillDebugger() {
 
             {/* Audit Issues List */}
             <div className="flex-1 overflow-y-auto space-y-2.5">
-              {filteredIssues.length === 0 ? (
+              {!hasAuditRun ? (
+                <div className="card text-center py-8">
+                  <span className="text-[var(--text-secondary)] font-mono text-sm">Ready to audit. Click &apos;Run Audit&apos; to scan your SKILL.md.</span>
+                </div>
+              ) : filteredIssues.length === 0 ? (
                 <div className="card text-center py-8">
                   <span className="text-emerald-400 font-mono text-sm">[PASS] Zero issues detected. Skill structure is valid.</span>
                 </div>
