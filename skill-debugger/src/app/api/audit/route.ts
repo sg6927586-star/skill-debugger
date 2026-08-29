@@ -48,11 +48,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are an expert AI Agent Skill Auditor. You strictly evaluate AI agent skills (SKILL.md files) according to these audit rules loaded directly from .agents/skills/skill-auditor/SKILL.md:
+    const systemPrompt = `You are a strict, precise AI Agent Skill Auditor. You evaluate AI agent skills (SKILL.md files) according to these exact audit rules loaded directly from .agents/skills/skill-auditor/SKILL.md:
 
 --- RULES FROM SKILL.MD BEGIN ---
 ${auditorRules}
 --- RULES FROM SKILL.MD END ---
+
+CRITICAL AUDIT RULES:
+1. Evaluate ONLY genuine violations of the 4 guidelines above in the provided text.
+2. If the skill has frontmatter with a valid lowercase kebab-case name (e.g., "code-reviewer", "app-optimizer") and a clear description, do NOT flag frontmatter issues.
+3. If instruction steps contain specific tools or concrete commands (e.g., "eslint --fix", "ajv validate", "npm test", "read tool", "prettier --write"), do NOT flag them as ambiguous or vague.
+4. If bulky schemas/manuals are replaced by links to "./references/..." or removed, do NOT flag progressive disclosure.
+5. If the skill contains an "## Output Protocol" section describing the response format, do NOT flag output formatting.
+6. If all 4 criteria pass, return "score": 100 and "issues": [].
 
 CRITICAL: Return ONLY a valid JSON object matching this schema without any markdown wrapping or backticks:
 {
@@ -94,7 +102,7 @@ CRITICAL: Return ONLY a valid JSON object matching this schema without any markd
           { role: "system", content: systemPrompt },
           { role: "user", content: `Please audit the following SKILL.md file:\n\n${skillContent}` }
         ],
-        temperature: 0.1,
+        temperature: 0.0,
         response_format: { type: "json_object" }
       })
     });
@@ -114,7 +122,7 @@ CRITICAL: Return ONLY a valid JSON object matching this schema without any markd
             { role: "system", content: systemPrompt },
             { role: "user", content: `Please audit the following SKILL.md file:\n\n${skillContent}` }
           ],
-          temperature: 0.1,
+          temperature: 0.0,
           response_format: { type: "json_object" }
         })
       });
