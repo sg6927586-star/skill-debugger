@@ -36,10 +36,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Prioritize OpenRouter API key, fallback to LatentStack API key
-    const openRouterKey = process.env.OPENROUTER_API_KEY || "";
+    // 2. Prioritize LatentStack API key, fallback to OpenRouter API key
     const latentStackKey = process.env.LATENTSTACK_API_KEY || "";
-    const apiKey = openRouterKey || latentStackKey;
+    const openRouterKey = process.env.OPENROUTER_API_KEY || "";
+    const apiKey = latentStackKey || openRouterKey;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -78,13 +78,13 @@ CRITICAL: Return ONLY a valid JSON object matching this schema without any markd
   ]
 }`;
 
-    // 3. Configure endpoint and model based on key type
-    let endpoint = "https://openrouter.ai/api/v1/chat/completions";
-    let modelName = "openai/gpt-4o-mini";
+    // 3. Configure endpoint and model based on key type (LatentStack prioritized)
+    let endpoint = "https://latentstack.dev/v1/chat/completions";
+    let modelName = "latentrouter/gemini/gemini-3.7-flash";
 
-    if (apiKey.startsWith("ls-")) {
-      endpoint = "https://latentstack.dev/v1/chat/completions";
-      modelName = "latentrouter/gemini/gemini-3.7-flash";
+    if (apiKey.startsWith("sk-or-") && !apiKey.startsWith("ls-")) {
+      endpoint = "https://openrouter.ai/api/v1/chat/completions";
+      modelName = "openai/gpt-4o-mini";
     }
 
     const headers: Record<string, string> = {
@@ -161,8 +161,14 @@ CRITICAL: Return ONLY a valid JSON object matching this schema without any markd
       }));
     }
 
+    // Force primary audit score to 60 if issues exist
+    let auditScore = typeof parsedData.score === "number" ? parsedData.score : 60;
+    if (parsedData.issues && parsedData.issues.length > 0) {
+      auditScore = 60;
+    }
+
     return NextResponse.json({
-      score: typeof parsedData.score === "number" ? parsedData.score : 70,
+      score: auditScore,
       issues: parsedData.issues || []
     });
 
